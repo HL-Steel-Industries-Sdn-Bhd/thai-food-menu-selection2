@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HL 20th Anniversary Dinner · 菜单选择</title>
+<style>
+  :root{
+    --gold:#e8c86a;
+    --bg:#0e1014;
+    --panel:#15181f;
+    --panel-2:#1a1e27;
+    --line:rgba(255,255,255,.07);
+    --txt:#e8e4dc;
+    --muted:#8d8a83;
+    --nv:#e07a5f;
+    --vg:#5fbf7a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  body{
+    background:
+      radial-gradient(1200px 600px at 18% -10%, rgba(201,162,39,.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(59,130,196,.08), transparent 55%),
+      var(--bg);
+    color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    min-height:100vh;
+    padding-bottom:70px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== 顶栏 ===== */
+  .topbar{
+    position:sticky;top:0;z-index:99;
+    display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;
+    padding:16px 28px;
+    background:rgba(14,16,20,.9);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(232,200,106,.22);
+  }
+  .brand h1{font-size:20px;font-weight:800;letter-spacing:.4px}
+  .brand h1 sup{font-size:11px;color:var(--gold)}
+  .brand p{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+  .brand p b{color:#c8b98d;font-weight:600}
+
+  .total-box{text-align:right;margin-left:auto;min-width:260px}
+  .total-label{font-size:10.5px;letter-spacing:1.8px;color:var(--muted);text-transform:uppercase}
+  .total-value{
+    font-size:36px;font-weight:900;line-height:1.15;
+    color:var(--gold);
+    font-variant-numeric:tabular-nums;
+    text-shadow:0 0 28px rgba(232,200,106,.35);
+    transition:transform .18s ease;
+  }
+  .total-value.bump{transform:scale(1.045)}
+  .total-sub{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.6}
+  .total-sub b{color:#b9ad8a;font-weight:700}
+
+  /* ===== 切换 Tabs ===== */
+  .tab-bar{
+    display:flex;gap:10px;
+    padding:16px 28px 0;
+    max-width:1440px;margin:0 auto;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .tab{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:11px 22px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--muted);
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+    letter-spacing:.2px;
+  }
+  .tab:hover{border-color:rgba(232,200,106,.4);color:var(--txt)}
+  .tab .dot{
+    width:9px;height:9px;border-radius:50%;flex:none;
+    transition:.2s;
+  }
+  .tab .count{
+    font-size:11px;font-weight:600;
+    padding:2px 9px;border-radius:999px;
+    background:rgba(255,255,255,.06);
+    color:var(--muted);
+    transition:.2s;
+    font-variant-numeric:tabular-nums;
+  }
+  .tab.active{
+    border-color:var(--gold);
+    color:var(--txt);
+    background:linear-gradient(180deg,rgba(232,200,106,.12),rgba(232,200,106,.03));
+    box-shadow:0 0 0 1px rgba(232,200,106,.25),0 8px 22px rgba(232,200,106,.10);
+  }
+  .tab.active .count{
+    background:rgba(232,200,106,.2);color:var(--gold);
+  }
+  .tab[data-tab="nonveg"].active .dot{background:var(--nv);box-shadow:0 0 12px var(--nv)}
+  .tab[data-tab="veg"].active .dot{background:var(--vg);box-shadow:0 0 12px var(--vg)}
+  .tab[data-tab="nonveg"] .dot{background:#5a4038}
+  .tab[data-tab="veg"] .dot{background:#2f5439}
+
+  /* ===== 主容器 ===== */
+  .wrap{max-width:1440px;margin:0 auto;padding:20px 28px}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+  .hint{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .hint b{color:var(--gold);font-weight:700}
+  .reset{
+    background:transparent;border:1px solid rgba(232,200,106,.35);color:var(--gold);
+    padding:9px 18px;border-radius:999px;font-size:12.5px;cursor:pointer;font-family:inherit;
+    transition:.18s;font-weight:600;letter-spacing:.3px;
+  }
+  .reset:hover{background:rgba(232,200,106,.13);border-color:var(--gold)}
+  .reset:active{transform:scale(.97)}
+
+  /* ===== 分类卡片 ===== */
+  .cat{
+    background-color:var(--panel);
+    background-image:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,0));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px 20px 20px;
+    margin-bottom:16px;
+    transition:border-color .2s;
+  }
+  .cat.shared{
+    border-color:rgba(232,200,106,.22);
+    background-image:linear-gradient(180deg,rgba(232,200,106,.035),rgba(255,255,255,0));
+  }
+  .cat-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  .cat-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .cat-dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .cat-title h2{font-size:15.5px;font-weight:700;letter-spacing:.2px}
+  .badge{
+    font-size:10.5px;padding:3px 10px;border-radius:999px;
+    background:rgba(232,200,106,.14);color:var(--gold);
+    border:1px solid rgba(232,200,106,.3);font-weight:600;white-space:nowrap;
+  }
+  .badge.shared-badge{
+    background:rgba(232,200,106,.18);color:#f2d98a;
+    border-color:rgba(232,200,106,.5);
+  }
+  .badge.shared-badge::before{content:"◆ ";font-size:9px}
+  .cat-price{font-size:15px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .cat-price span{font-size:11px;font-weight:500;color:var(--muted)}
+  .cat-price .muted{color:#4f5764;font-weight:500;font-size:12.5px}
+  .cat-note{font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.55}
+
+  /* ===== 选项网格 ===== */
+  .opts{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(156px,1fr));
+    gap:12px;
+    margin-top:15px;
+  }
+
+  .opt{
+    position:relative;
+    display:flex;flex-direction:column;align-items:center;gap:7px;
+    padding:15px 10px 13px;
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    cursor:pointer;
+    transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease;
+    font-family:inherit;color:inherit;text-align:center;
+    -webkit-tap-highlight-color:transparent;
+    outline:none;
+  }
+  .opt:hover{transform:translateY(-3px);border-color:rgba(232,200,106,.42)}
+  .opt:active{transform:translateY(-1px) scale(.985)}
+  .opt:focus-visible{box-shadow:0 0 0 3px rgba(232,200,106,.35)}
+  .opt.selected{
+    border-color:var(--gold);
+    background:linear-gradient(180deg,rgba(232,200,106,.10),rgba(232,200,106,.028));
+    box-shadow:0 0 0 1px rgba(232,200,106,.35),0 10px 28px rgba(232,200,106,.10);
+  }
+
+  .ring{
+    width:84px;height:84px;border-radius:50%;overflow:hidden;flex:none;
+    border:3px solid rgba(255,255,255,.10);
+    transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+  }
+  .opt:hover .ring{border-color:rgba(232,200,106,.45)}
+  .opt.selected .ring{
+    border-color:var(--gold);
+    box-shadow:0 0 0 5px rgba(232,200,106,.14),0 0 24px rgba(232,200,106,.42);
+    transform:scale(1.03);
+  }
+  .ring img{width:100%;height:100%;display:block}
+
+  .opt.selected::after{
+    content:"✓";
+    position:absolute;top:9px;right:9px;
+    width:20px;height:20px;border-radius:50%;
+    background:var(--gold);color:#14171d;
+    font-size:12px;font-weight:900;line-height:20px;text-align:center;
+    animation:pop .22s ease;
+  }
+  @keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+  .opt-name{font-size:13px;font-weight:700;line-height:1.3}
+  .opt-detail{
+    font-size:10.5px;color:var(--muted);line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .opt-price{font-size:12.5px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+  .opt-price em{font-style:normal;font-size:10.5px;font-weight:500;color:var(--muted)}
+  .opt-per{font-size:10.5px;color:#7d8b96;font-variant-numeric:tabular-nums}
+
+  footer{
+    max-width:1440px;margin:44px auto 0;padding:0 28px;
+    font-size:11.5px;color:var(--muted);line-height:1.9;
+    border-top:1px solid var(--line);padding-top:18px;
+  }
+  footer b{color:#a99a72;font-weight:600}
+
+  /* ===== Tab 显隐 ===== */
+  body[data-tab="nonveg"] .cat[data-scope="veg"]{display:none}
+  body[data-tab="veg"]    .cat[data-scope="nonveg"]{display:none}
+
+  @media (max-width:640px){
+    .topbar{padding:14px 16px}
+    .tab-bar{padding:14px 16px 0}
+    .wrap{padding:16px}
+    .total-box{text-align:left;min-width:auto;width:100%}
+    .total-value{font-size:28px}
+    .opts{grid-template-columns:repeat(auto-fill,minmax(134px,1fr));gap:10px}
+    .ring{width:70px;height:70px}
+    .brand p{font-size:11px}
+    .tab{padding:9px 16px;font-size:12.5px}
+  }
+</style>
+</head>
+<body data-tab="nonveg">
+
+<header class="topbar">
+  <div class="brand">
+    <h1>HL 20<sup>th</sup> Anniversary Dinner</h1>
+    <p>
+      菜单选择 · <b>120 pax</b>（113 + 7 backup = 含 6 位素食者）·
+      <b>15 Tables × 8 pax</b> · 少辣 · 1 位有壳海鲜过敏
+    </p>
+  </div>
+  <div class="total-box">
+    <div class="total-label">预估总价 · Estimated Total</div>
+    <div class="total-value" id="grandTotal">RM 0.00</div>
+    <div class="total-sub" id="totalSub">非素 RM 0.00 × 114 · 素食 RM 0.00 × 6</div>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab active" data-tab="nonveg" id="tabNonveg">
+    <span class="dot"></span>
+    <span>非素食菜单</span>
+    <span class="count">114 pax</span>
+  </button>
+  <button class="tab" data-tab="veg" id="tabVeg">
+    <span class="dot"></span>
+    <span>素食菜单</span>
+    <span class="count">6 pax</span>
+  </button>
+</div>
+
+<main class="wrap">
+  <div class="toolbar">
+    <span class="hint">
+      点击<b>圆形按钮</b>选择菜品 · 每个类别选 <b>1</b> 个 · <b>Fish 鱼类</b>最多选 <b>2</b> 个口味 ·
+      <b>◆ 荤素共享</b>菜品两边同步
+    </span>
+    <button class="reset" id="resetBtn">重置全部</button>
+  </div>
+
+  <div id="menuRoot"></div>
+</main>
+
+<footer>
+  <b>计价逻辑：</b>每人单价 = 每份价格 ÷ 每份供应人数；非素总价 = 非素人均 × 114 人，素食总价 = 素食人均 × 6 人，合计为 120 人总价。
+  <b>荤素共享（Same）</b>的菜品会同时出现在两个菜单里，两种人都可以吃，选择状态自动同步 —— 分别按 114 份 + 6 份计价，合计 120 份。<br>
+  <b>提醒：</b>1 位宾客对「有壳海鲜」过敏，请避开 River Prawn / 虾米 / 蟹肉 / Sotong / 鱼露类菜品；全部菜品走少辣。价格为由 Cyril 假设的估算值，未含税与服务费。
+</footer>
+
+<script>
+/* =========================================================
+   1. 基础参数（6 位素食者包含在 120 人内）
+   ========================================================= */
+const PAX = {
+  total : 120,
+  nonveg: 114,   // 120 - 6
+  veg   : 6
+};
+
+/* =========================================================
+   2. 菜单数据
+   scope: 'nonveg' | 'veg' | 'shared'
+   - shared：荤素共用同一道菜，两个菜单都会显示，选择联动
+   ========================================================= */
+const CATEGORIES = [
+
+  /* ================= 荤素共享（Same） ================= */
+  {
+    id:'appetizer', category:'Appetizer + Souvenir', color:'#c9a227',
+    scope:'shared',
+    note:'开场迎宾 · 铝箔纸包装，笔形脆皮卷（芋泥 / 香蕉 / 菜）',
+    options:[
+      { id:'ap1', icon:'🎁', name:'Appetizer + Souvenir',
+        detail:'Aluminum foil 铝箔纸 · 笔形状芋泥 / 香蕉 / 菜的 crispy popiah，开场让来宾更受重视',
+        price:15, servings:1 }
+    ]
+  },
+
+  /* ================= 非素食专属 ================= */
+  {
+    id:'soup_nv', category:'Coconut Soup', color:'#2f9e8f',
+    scope:'nonveg',
+    note:'椰子水汤底 · 一只 River Prawn 显得大方',
+    options:[
+      { id:'sp1', icon:'🍤', name:'Coconut TomYum (Seafood)',
+        detail:'椰子水煮的，一只 River Prawn ⚠️ 有壳海鲜', price:58, servings:1 }
+    ]
+  },
+
+  /* ================= 素食专属 ================= */
+  {
+    id:'soup_v', category:'Coconut Soup', color:'#2f9e8f',
+    scope:'veg',
+    note:'椰子水汤底 · 两种 mushroom',
+    options:[
+      { id:'sp2', icon:'🍄', name:'Coconut TomYum (Mushroom)',
+        detail:'椰子水煮的，两种 mushroom', price:38, servings:1 },
+      { id:'sp3', icon:'🥣', name:'Coconut Galangal Soup',
+        detail:'南姜汤，两种 mushroom', price:38, servings:1 }
+    ]
+  },
+
+  /* ================= 荤素共享（Same） ================= */
+  {
+    id:'dessert', category:'Dessert', color:'#c0398a',
+    scope:'shared',
+    note:'甜品拼盘让宾客自选，不浪费',
+    options:[
+      { id:'ds1', icon:'🍮', name:'Dessert Sharing Platter',
+        detail:'甜品拼盘，宾客可以选自己要吃什么，不会浪费', price:72, servings:8 },
+      { id:'ds2', icon:'🍧', name:'À la carte · 3 Desserts',
+        detail:'3 样甜品一人一份，最后才上，有些宾客吃不下会剩很多', price:9, servings:1 }
+    ]
+  },
+
+  /* ================= 非素食专属（续） ================= */
+  {
+    id:'fish', category:'Fish · 鱼类', color:'#3b82c4',
+    scope:'nonveg', multi:2, fishMode:true,
+    note:'一桌子可以选 2 个不同口味 · 每口味供 4 人份 · 石斑鱼 1–1.2kg',
+    options:[
+      { id:'f1',  icon:'🌶️', name:'Lime Chili Steam · Grouper 石斑鱼', detail:'1–1.2kg', price:270, servings:4 },
+      { id:'f2',  icon:'🌶️', name:'Lime Chili Steam · Siakap 金目鲈',  detail:'', price:80,  servings:4 },
+      { id:'f3',  icon:'🐟', name:'Soy Sauce Steam · Grouper 石斑鱼',  detail:'', price:270, servings:4 },
+      { id:'f4',  icon:'🐟', name:'Soy Sauce Steam · Siakap 金目鲈',   detail:'', price:80,  servings:4 },
+      { id:'f5',  icon:'🌿', name:'Thai Herb Fried · Grouper 石斑鱼',  detail:'', price:270, servings:4 },
+      { id:'f6',  icon:'🌿', name:'Thai Herb Fried · Siakap 金目鲈',   detail:'', price:80,  servings:4 },
+      { id:'f7',  icon:'🍋', name:'Spicy Sour Fried · Grouper 石斑鱼', detail:'1–1.2kg', price:270, servings:4 },
+      { id:'f8',  icon:'🍋', name:'Spicy Sour Fried · Siakap 金目鲈',  detail:'', price:80,  servings:4 },
+      { id:'f9',  icon:'🍯', name:'Sweet Sour Fried · Grouper 石斑鱼', detail:'', price:270, servings:4 },
+      { id:'f10', icon:'🍯', name:'Sweet Sour Fried · Siakap 金目鲈',  detail:'', price:80,  servings:4 }
+    ]
+  },
+  {
+    id:'hotapp', category:'Hot Appetizer', color:'#d1603d',
+    scope:'nonveg',
+    note:'4–5 种开胃小吃，五颜六色，每种准备 8 个',
+    options:[
+      { id:'ha1', icon:'🥟', name:'Hot Appetizer',
+        detail:'4–5 种开胃小吃，五颜六色，每种 8 个', price:272, servings:8 },
+      { id:'ha2', icon:'🍃', name:'Betel Leaf Set（非素食）',
+        detail:'有虾米、鱼露，所以非素食 ⚠️ 过敏者避开', price:32, servings:2 }
+    ]
+  },
+  {
+    id:'rice', category:'Fried Rice', color:'#b8860b',
+    scope:'nonveg',
+    note:'招牌炒饭',
+    options:[
+      { id:'r1', icon:'🍍', name:'Pineapple Fried Rice (Prawn)',
+        detail:'招牌之一 ⚠️ 含虾', price:35, servings:4 },
+      { id:'r2', icon:'🍍', name:'Pineapple Fried Rice (Chicken)',
+        detail:'招牌之一', price:29, servings:4 },
+      { id:'r3', icon:'🦀', name:'Crab Fried Rice',
+        detail:'Chef Suggest · 比较适合这个场合 ⚠️ 含蟹', price:38, servings:1 }
+    ]
+  },
+  {
+    id:'cocktaildrink', category:'Cocktail Section · Beverage', color:'#8e44ad',
+    scope:'nonveg',
+    options:[
+      { id:'cd1', icon:'🍹', name:'Mocktail', detail:'无酒精鸡尾酒', price:15, servings:1 }
+    ]
+  },
+  {
+    id:'cocktaildessert', category:'Cocktail Section · Dessert', color:'#b3459a',
+    scope:'nonveg',
+    options:[
+      { id:'ce1', icon:'🍨', name:'Assorted Dessert', detail:'精选甜点', price:12, servings:1 }
+    ]
+  },
+  {
+    id:'chicken', category:'Chicken', color:'#b5651d',
+    scope:'nonveg',
+    options:[
+      { id:'ch1', icon:'🍗', name:'Roasted Chicken', detail:'招牌之一', price:70, servings:4 }
+    ]
+  },
+  {
+    id:'veg_nv', category:'Vegetable', color:'#3f9142',
+    scope:'nonveg',
+    options:[
+      { id:'v1', icon:'🥬', name:'Cabbage Shoot (Salted Fish)', detail:'菜心 · 咸鱼', price:28, servings:4 },
+      { id:'v2', icon:'🥬', name:'Cabbage Shoot (Stir-Fried)',  detail:'菜心 · 清炒', price:23, servings:4 },
+      { id:'v3', icon:'🌿', name:'Fried Kang Kung',             detail:'炒空心菜',   price:18, servings:4 }
+    ]
+  },
+  {
+    id:'omelette_nv', category:'Omelette', color:'#d9a441',
+    scope:'nonveg',
+    options:[
+      { id:'o1', icon:'🍳', name:'Omelette (Acacia Leaf)', detail:'金合欢叶煎蛋', price:23, servings:4 },
+      { id:'o2', icon:'🦀', name:'Omelette (Crab)',        detail:'含蟹肉 ⚠️ 过敏者避开', price:48, servings:4 }
+    ]
+  },
+  {
+    id:'seafood', category:'Seafood', color:'#2c7a9e',
+    scope:'nonveg',
+    options:[
+      { id:'sf1', icon:'🦑', name:'Fried Sotong Ring (Salted Ring)', detail:'炸苏东圈 ⚠️ 海鲜', price:48, servings:4 }
+    ]
+  },
+  {
+    id:'curry', category:'Curry', color:'#c26b1f',
+    scope:'nonveg',
+    options:[
+      { id:'cu1', icon:'🍛', name:'Green Curry (Chicken)', detail:'绿咖喱鸡', price:28, servings:4 }
+    ]
+  },
+  {
+    id:'basil_nv', category:'Holy Basil · 打抛叶', color:'#4c8c3f',
+    scope:'nonveg',
+    options:[
+      { id:'b1', icon:'🍆', name:'Holy Basil Eggplant',     detail:'打抛茄子',   price:32, servings:4 },
+      { id:'b2', icon:'🌿', name:'Holy Basil Mince Chicken', detail:'打抛鸡肉碎', price:23, servings:4 }
+    ]
+  },
+
+  /* ================= 素食专属（续） ================= */
+  {
+    id:'veg_v', category:'Vegetable', color:'#3f9142',
+    scope:'veg',
+    note:'素食专用蔬菜（无咸鱼 / 无虾米）',
+    options:[
+      { id:'vv1', icon:'🥬', name:'Cabbage Shoot (Stir-Fried)', detail:'菜心 · 清炒',   price:23, servings:4 },
+      { id:'vv2', icon:'🌿', name:'Fried Kang Kung',            detail:'炒空心菜',     price:18, servings:4 },
+      { id:'vv3', icon:'🍆', name:'Holy Basil Eggplant',        detail:'打抛茄子',     price:32, servings:4 }
+    ]
+  },
+  {
+    id:'omelette_v', category:'Omelette', color:'#d9a441',
+    scope:'veg',
+    options:[
+      { id:'vo1', icon:'🍳', name:'Omelette (Acacia Leaf)', detail:'金合欢叶煎蛋 · 蛋奶素', price:23, servings:4 }
+    ]
+  }
+];
+
+/* =========================================================
+   3. 颜色工具 + Base64 图片生成
+   ========================================================= */
+function hexToRgb(hex){
+  hex = String(hex).replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+  return [
+    parseInt(hex.slice(0,2),16),
+    parseInt(hex.slice(2,4),16),
+    parseInt(hex.slice(4,6),16)
+  ];
+}
+function lighten(hex, amt){
+  const [r,g,b] = hexToRgb(hex);
+  return `rgb(${Math.round(r+(255-r)*amt)},${Math.round(g+(255-g)*amt)},${Math.round(b+(255-b)*amt)})`;
+}
+function darken(hex, amt){
+  const [r,g,b] = hexToRgb(hex);
+  const f = 1 - amt;
+  return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`;
+}
+
+/* 用 Base64 内嵌 SVG 生成菜品圆形图片（无需外部图片） */
+function makeIcon(emoji, color){
+  const c1 = lighten(color, 0.30);
+  const c2 = darken(color, 0.38);
+  const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${c1}"/>
+      <stop offset="100%" stop-color="${c2}"/>
+    </linearGradient>
+  </defs>
+  <circle cx="110" cy="110" r="110" fill="url(#g)"/>
+  <circle cx="110" cy="110" r="110" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="6"/>
+  <ellipse cx="82" cy="66" rx="46" ry="30" fill="rgba(255,255,255,0.13)"/>
+  <text x="110" y="110" font-size="112" text-anchor="middle"
+        dominant-baseline="central"
+        font-family="Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif">${emoji}</text>
+</svg>`;
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
+/* =========================================================
+   4. 状态
+   selections: { categoryId: [optionId, ...] }
+   - shared 类别的 categoryId 只有一份 → 天然共享
+   ========================================================= */
+const state = {
+  activeTab: 'nonveg',
+  selections: {}
+};
+
+/* =========================================================
+   5. 价格计算
+   ========================================================= */
+function fmt(n){
+  return Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function categoryPerPerson(cat, sel){
+  if (!sel || !sel.length) return 0;
+  const opts = sel.map(id => cat.options.find(o => o.id === id)).filter(Boolean);
+  if (cat.fishMode){
+    /* 鱼类：每个口味都要供全桌（每人尝到每个口味），每人价格 = Σ(price) / 4 */
+    return opts.reduce((s,o) => s + o.price, 0) / 4;
+  }
+  return opts.reduce((s,o) => s + o.price / o.servings, 0);
+}
+
+/* =========================================================
+   6. 渲染菜单
+   ========================================================= */
+function renderMenu(){
+  const root = document.getElementById('menuRoot');
+  const frag = document.createDocumentFragment();
+
+  CATEGORIES.forEach(cat => {
+    const sec = document.createElement('section');
+    sec.className = 'cat' + (cat.scope === 'shared' ? ' shared' : '');
+    sec.dataset.cat   = cat.id;
+    sec.dataset.scope = cat.scope;
+
+    /* 头部 */
+    const head = document.createElement('div');
+    head.className = 'cat-head';
+
+    let badgesHTML = '';
+    if (cat.scope === 'shared'){
+      badgesHTML += '<span class="badge shared-badge">荤素共享 · Same</span>';
+    }
+    if (cat.multi){
+      badgesHTML += '<span class="badge">一桌最多选 ' + cat.multi + ' 个</span>';
+    }
+
+    head.innerHTML =
+      '<div class="cat-title">' +
+        '<span class="cat-dot" style="background:' + cat.color + ';box-shadow:0 0 12px ' + cat.color + '"></span>' +
+        '<h2>' + cat.category + '</h2>' +
+        badgesHTML +
+      '</div>' +
+      '<div class="cat-price"><span class="muted">— 未选择 —</span></div>';
+    sec.appendChild(head);
+
+    if (cat.note){
+      const p = document.createElement('p');
+      p.className = 'cat-note';
+      p.textContent = cat.note;
+      sec.appendChild(p);
+    }
+
+    /* 选项网格 */
+    const grid = document.createElement('div');
+    grid.className = 'opts';
+
+    cat.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'opt';
+      btn.dataset.cat = cat.id;
+      btn.dataset.opt = opt.id;
+
+      const unit = opt.servings > 1 ? opt.servings + ' 人份' : '1 人份';
+      const perP = cat.fishMode ? opt.price / 4 : opt.price / opt.servings;
+
+      btn.innerHTML =
+        '<span class="ring"><img alt="" src="' + makeIcon(opt.icon, cat.color) + '"></span>' +
+        '<span class="opt-name">' + opt.name + '</span>' +
+        (opt.detail ? '<span class="opt-detail">' + opt.detail + '</span>' : '') +
+        '<span class="opt-price">RM ' + fmt(opt.price) + ' <em>/ 份 · ' + unit + '</em></span>' +
+        '<span class="opt-per">≈ RM ' + fmt(perP) + ' / 人</span>';
+
+      btn.addEventListener('click', () => toggleOption(cat, opt.id));
+      grid.appendChild(btn);
+    });
+
+    sec.appendChild(grid);
+    frag.appendChild(sec);
+  });
+
+  root.appendChild(frag);
+}
+
+/* =========================================================
+   7. 选择逻辑
+   ========================================================= */
+function toggleOption(cat, optId){
+  const cur = state.selections[cat.id] || [];
+  const max = (cat.multi && cat.multi > 1) ? cat.multi : 1;
+  let next;
+
+  if (cur.includes(optId)){
+    next = cur.filter(x => x !== optId);
+  } else if (cur.length >= max){
+    /* 已满 → 顶掉最早选的 */
+    next = [...cur.slice(cur.length - max + 1), optId];
+  } else {
+    next = [...cur, optId];
+  }
+
+  state.selections[cat.id] = next;
+  update();
+}
+
+/* =========================================================
+   8. 更新 UI + 计算总价
+   ========================================================= */
+const grandEl = document.getElementById('grandTotal');
+const subEl   = document.getElementById('totalSub');
+let lastGrand = 0;
+
+function update(){
+  /* ---- 勾选状态（shared 类别天然同步，因为 DOM 只有一份 + 状态只有一份） ---- */
+  document.querySelectorAll('.opt').forEach(btn => {
+    const c = btn.dataset.cat, o = btn.dataset.opt;
+    const sel = state.selections[c] || [];
+    btn.classList.toggle('selected', sel.includes(o));
+  });
+
+  /* ---- 计算 ---- */
+  let nvPerPax = 0, vPerPax = 0;
+  let nvSelected = 0, vSelected = 0;
+  let nvTotalCats = 0, vTotalCats = 0;
+
+  CATEGORIES.forEach(cat => {
+    const sel = state.selections[cat.id] || [];
+    const pp  = categoryPerPerson(cat, sel);
+
+    /* 更新类别标题右侧单人价 */
+    const el = document.querySelector('.cat[data-cat="' + cat.id + '"] .cat-price');
+    if (el){
+      el.innerHTML = sel.length
+        ? 'RM ' + fmt(pp) + ' <span>/ 人</span>'
+        : '<span class="muted">— 未选择 —</span>';
+    }
+
+    /* 非素侧 */
+    if (cat.scope === 'nonveg' || cat.scope === 'shared'){
+      nvPerPax += pp;
+      nvTotalCats++;
+      if (sel.length) nvSelected++;
+    }
+    /* 素食侧 */
+    if (cat.scope === 'veg' || cat.scope === 'shared'){
+      vPerPax += pp;
+      vTotalCats++;
+      if (sel.length) vSelected++;
+    }
+  });
+
+  const nvTotal = nvPerPax * PAX.nonveg;
+  const vTotal  = vPerPax  * PAX.veg;
+  const grand   = nvTotal + vTotal;
+
+  grandEl.textContent = 'RM ' + fmt(grand);
+
+  subEl.innerHTML =
+    '非素 <b>RM ' + fmt(nvPerPax) + '</b> × 114 · ' +
+    '素食 <b>RM ' + fmt(vPerPax) + '</b> × 6 · ' +
+    '合计 <b>120</b> 人';
+
+  if (grand !== lastGrand){
+    lastGrand = grand;
+    grandEl.classList.remove('bump');
+    void grandEl.offsetWidth;
+    grandEl.classList.add('bump');
+  }
+}
+
+/* =========================================================
+   9. Tab 切换
+   ========================================================= */
+document.getElementById('tabNonveg').addEventListener('click', () => switchTab('nonveg'));
+document.getElementById('tabVeg').addEventListener('click', () => switchTab('veg'));
+
+function switchTab(tab){
+  state.activeTab = tab;
+  document.body.dataset.tab = tab;
+
+  document.getElementById('tabNonveg').classList.toggle('active', tab === 'nonveg');
+  document.getElementById('tabVeg').classList.toggle('active', tab === 'veg');
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* =========================================================
+   10. 重置
+   ========================================================= */
+document.getElementById('resetBtn').addEventListener('click', () => {
+  state.selections = {};
+  update();
+});
+
+/* =========================================================
+   11. 初始化
+   ========================================================= */
+renderMenu();
+update();
+</script>
+</body>
+</html>
